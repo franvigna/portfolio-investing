@@ -1,0 +1,212 @@
+[
+  {
+    "symbol": "AAPL",
+    "descripcion": "CEDEAR APPLE INC.",
+    "categoria": "Cedear",
+    "precioActual": 18830,
+    "precioActualUSD": 13.35745194
+  },
+  {
+    "symbol": "AMD",
+    "descripcion": "CEDEAR ADVANCED MICRO DEVICES, INC.",
+    "categoria": "Cedear",
+    "precioActual": 36380,
+    "precioActualUSD": 25.80690927
+  },
+  {
+    "symbol": "MELI",
+    "descripcion": "CEDEAR MERCADOLIBRE INC.",
+    "categoria": "Cedear",
+    "precioActual": 22540,
+    "precioActualUSD": 15.98921756
+  },
+  {
+    "symbol": "MSFT",
+    "descripcion": "CEDEAR MICROSOFT CORP. ESCRIT.",
+    "categoria": "Cedear",
+    "precioActual": 19030,
+    "precioActualUSD": 13.4993261
+  },
+  {
+    "symbol": "NVDA",
+    "descripcion": "CEDEAR NVIDIA CORPORATION",
+    "categoria": "Cedear",
+    "precioActual": 11770,
+    "precioActualUSD": 8.349294176
+  },
+  {
+    "symbol": "QQQ",
+    "descripcion": "CEDEAR INVESCO QQQ TRUST",
+    "categoria": "ETF",
+    "precioActual": 45500,
+    "precioActualUSD": 32.27637086
+  },
+  {
+    "symbol": "SPY",
+    "descripcion": "CEDEAR SPDR S&P 500",
+    "categoria": "ETF",
+    "precioActual": 50475,
+    "precioActualUSD": 35.80549053
+  },
+  {
+    "symbol": "GGAL",
+    "descripcion": "GRUPO FINANCIERO GALICIA \"B\"1V.ESC.",
+    "categoria": "AccionArg",
+    "precioActual": 7185,
+    "precioActualUSD": 5.096829113
+  },
+  {
+    "symbol": "LOMA",
+    "descripcion": "ACC.ORD. LOMA NEGRA S.A. 1 VOTO $ ESC.",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "PAMP",
+    "descripcion": "PAMPA ENERGIA",
+    "categoria": "AccionArg",
+    "precioActual": 4965,
+    "precioActualUSD": 3.522025963
+  },
+  {
+    "symbol": "SUPV",
+    "descripcion": "GRUPO SUPERVIELLE ACC.ORD. \"B\" 1 V.$ ESC",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "TGSU2",
+    "descripcion": "T. DE GAS DEL SUR ESC. \"B\" 1 V.",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "YPFD",
+    "descripcion": "YPF S.A. ESCRIT. \"D\" 1 VOTO",
+    "categoria": "AccionArg",
+    "precioActual": 61950,
+    "precioActualUSD": 43.94552032
+  },
+  {
+    "symbol": "USDT",
+    "descripcion": "Dolar Cripto",
+    "categoria": "Cripto",
+    "precioActual": 1462.8,
+    "precioActualUSD": 1
+  },
+  {
+    "symbol": "BTC",
+    "descripcion": "Bitcoin",
+    "categoria": "Cripto",
+    "precioActual": 109744522.1,
+    "precioActualUSD": 75023.6
+  },
+  {
+    "symbol": "SMH",
+    "descripcion": "VanEck Semiconductor ETF",
+    "categoria": "ETF",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "ARKK",
+    "descripcion": "ARK Innovation ETF",
+    "categoria": "ETF",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "AMZN",
+    "descripcion": "AMAZON.COM, INC.",
+    "categoria": "Cedear",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "META",
+    "descripcion": "META PLATFORMS, INC.",
+    "categoria": "Cedear",
+    "precioActual": 40040,
+    "precioActualUSD": 28.40320636
+  },
+  {
+    "symbol": "GOOGL",
+    "descripcion": "ALPHABET INC. CLASS A",
+    "categoria": "Cedear",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "TECO2",
+    "descripcion": "Telecom Argentina",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "BMA",
+    "descripcion": "Banco Macro",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "VIG",
+    "descripcion": "Vanguard Div Appreciation",
+    "categoria": "ETF",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "CEPU",
+    "descripcion": "Central Puerto",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "ASML",
+    "descripcion": "ASML Holding",
+    "categoria": "Cedear",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "TGNO4",
+    "descripcion": "Transportadora Gas del Norte",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "ALUA",
+    "descripcion": "Aluar",
+    "categoria": "AccionArg",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "ADBE",
+    "descripcion": "CEDEAR ADOBE SYSTEMS INCORPORATED",
+    "categoria": "Cedear",
+    "precioActual": null,
+    "precioActualUSD": null
+  },
+  {
+    "symbol": "COCOSPPA",
+    "descripcion": "Cocos Pesos Plus",
+    "categoria": "FCI",
+    "precioActual": 1314.83,
+    "precioActualUSD": 0.9327019933
+  },
+  {
+    "symbol": "AL30",
+    "descripcion": "Bono AL30",
+    "categoria": "FCI",
+    "precioActual": null,
+    "precioActualUSD": null
+  }
+]

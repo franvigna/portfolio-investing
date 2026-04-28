@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"taskkill /PID 2016 /F 2>&1\")",
+      "Bash(cmd /c \"tasklist /FI \\\\\"PID eq 2016\\\\\" 2>&1\")",
+      "Bash(powershell -Command \"Stop-Process -Id 2016 -Force -ErrorAction SilentlyContinue; Get-Process -Id 2016 -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -Command \"Stop-Process -Id 2016 -Force; Start-Sleep 1; Get-Process -Id 2016 -ErrorAction SilentlyContinue | Select-Object Id,ProcessName\")"
+    ]
+  }
+}

@@ -1,19 +1,12 @@
-import { getDb } from "@/db";
-import { transactions } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { getTransactions } from "@/lib/storage";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const db = getDb();
-    const data = await db
-      .select()
-      .from(transactions)
-      .orderBy(desc(transactions.date));
-
-    return new NextResponse(JSON.stringify(data, null, 2), {
+    const txs = await getTransactions();
+    return new NextResponse(JSON.stringify(txs, null, 2), {
       headers: {
         "Content-Type": "application/json",
         "Content-Disposition": `attachment; filename="portfolio-export-${new Date().toISOString().split("T")[0]}.json"`,
@@ -21,6 +14,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/export error:", error);
-    return NextResponse.json({ error: "Error exporting data" }, { status: 500 });
+    return NextResponse.json({ error: "Error al exportar datos" }, { status: 500 });
   }
 }
