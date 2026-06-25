@@ -73,7 +73,9 @@ export async function POST() {
     const cripto = dolares.find((d) => d.casa === "cripto");
 
     const usdMep = mep?.venta ?? null;
-    const usdt = cripto?.venta ?? null;
+    // Nexo aplica un markup de 3.15% sobre el dolar cripto oficial
+    const usdtBase = cripto?.venta ?? null;
+    const usdt = usdtBase != null ? usdtBase * 1.0315 : null;
 
     const current = await getVariables();
     const updated = {
