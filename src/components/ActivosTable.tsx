@@ -1,6 +1,6 @@
 "use client";
 
-import { fmtARS, fmtPct, fmtQty, colorG, catColor, CAT_TABS } from "@/lib/format";
+import { fmtARS, fmtUSD, fmtPct, fmtQty, colorG, catColor, CAT_TABS } from "@/lib/format";
 import type { Posicion, ResumenCartera, Transaction } from "@/types";
 import { FooterTotales } from "./FooterTotales";
 
@@ -16,6 +16,7 @@ interface ActivosTableProps {
   showTx: boolean;
   setShowTx: (v: boolean) => void;
   transactions: Transaction[];
+  moneda: "ARS" | "USD";
 }
 
 export function ActivosTable({
@@ -28,7 +29,11 @@ export function ActivosTable({
   showTx,
   setShowTx,
   transactions,
+  moneda,
 }: ActivosTableProps) {
+  const isUSD = moneda === "USD";
+  const fmt = isUSD ? fmtUSD : fmtARS;
+
   return (
     <div className="border border-white/8 rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.02)" }}>
       <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
@@ -76,39 +81,49 @@ export function ActivosTable({
             {filteredPos.length === 0 ? (
               <tr><td colSpan={7} className="text-center text-gray-600 py-12">Sin posiciones activas en esta categoria</td></tr>
             ) : (
-              filteredPos.map((p) => (
-                <tr key={p.ticker} className="border-b border-white/5 hover:bg-white/3 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: catColor(p.categoria) }}>
-                        {p.ticker.charAt(0)}
+              filteredPos.map((p) => {
+                const precio = isUSD ? p.precioActualUSD : p.precioActualARS;
+                const valuacion = isUSD ? (p.valuacionUSD ?? p.capitalInvertidoUSD) : (p.valuacionARS ?? p.capitalInvertidoARS);
+                const ppc = isUSD ? p.promedioCompraUSD : p.promedioCompraARS;
+                const ganancia = isUSD ? p.gananciaUSD : p.gananciaARS;
+                const gananciaPct = isUSD ? p.gananciaPctUSD : p.gananciaPctARS;
+
+                return (
+                  <tr key={p.ticker} className="border-b border-white/5 hover:bg-white/3 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: catColor(p.categoria) }}>
+                          {p.ticker.charAt(0)}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-white">{p.ticker}</span>
+                          {p.categoria && (
+                            <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full border text-gray-400" style={{ borderColor: catColor(p.categoria) + "50", color: catColor(p.categoria) }}>
+                              {p.categoria}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-semibold text-white">{p.ticker}</span>
-                        {p.categoria && (
-                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full border text-gray-400" style={{ borderColor: catColor(p.categoria) + "50", color: catColor(p.categoria) }}>
-                            {p.categoria}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-mono text-gray-200">
-                    {p.precioActualARS != null ? fmtARS(p.precioActualARS) : <span className="text-gray-600 text-xs">-</span>}
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-mono text-gray-300">{fmtQty(p.cantidad)}</td>
-                  <td className="px-4 py-3.5 text-right font-mono text-white font-medium">
-                    {p.valuacionARS != null ? fmtARS(p.valuacionARS) : fmtARS(p.capitalInvertidoARS)}
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-mono text-gray-400">{fmtARS(p.promedioCompraARS)}</td>
-                  <td className={`px-4 py-3.5 text-right font-mono font-medium ${colorG(p.gananciaARS)}`}>
-                    {p.gananciaARS != null ? fmtARS(p.gananciaARS) : "-"}
-                  </td>
-                  <td className={`px-5 py-3.5 text-right font-mono font-medium ${colorG(p.gananciaPctARS)}`}>
-                    {fmtPct(p.gananciaPctARS)}
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-mono text-gray-200">
+                      {precio != null ? fmt(precio) : <span className="text-gray-600 text-xs">-</span>}
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-mono text-gray-300">{fmtQty(p.cantidad)}</td>
+                    <td className="px-4 py-3.5 text-right font-mono text-white font-medium">
+                      {valuacion != null ? fmt(valuacion) : "-"}
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-mono text-gray-400">
+                      {ppc != null ? fmt(ppc) : "-"}
+                    </td>
+                    <td className={`px-4 py-3.5 text-right font-mono font-medium ${colorG(ganancia)}`}>
+                      {ganancia != null ? fmt(ganancia) : "-"}
+                    </td>
+                    <td className={`px-5 py-3.5 text-right font-mono font-medium ${colorG(gananciaPct)}`}>
+                      {fmtPct(gananciaPct)}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
           {filteredPos.length > 0 && (
@@ -116,6 +131,7 @@ export function ActivosTable({
               posiciones={filteredPos}
               resumen={resumen}
               esFiltrado={catFilter !== "Todo"}
+              moneda={moneda}
             />
           )}
         </table>

@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
-import { fmtARS, fmtUSD, type TimeRange } from "@/lib/format";
+import { fmtARS, fmtUSD, colorG, type TimeRange } from "@/lib/format";
 import { ChartTooltip } from "./ChartTooltip";
 import { DonutTooltip } from "./DonutTooltip";
 import type { ResumenCartera } from "@/types";
@@ -29,9 +29,30 @@ interface ChartsRowProps {
   setTimeRange: (r: TimeRange) => void;
   donutData: DonutItem[];
   resumen: ResumenCartera | undefined;
+  moneda: "ARS" | "USD";
 }
 
-export function ChartsRow({ chartData, timeRange, setTimeRange, donutData, resumen }: ChartsRowProps) {
+export function ChartsRow({ chartData, timeRange, setTimeRange, donutData, resumen, moneda }: ChartsRowProps) {
+  const isUSD = moneda === "USD";
+
+  // Tasa de conversión aproximada ARS→USD basada en los totales actuales
+  const tcRate =
+    resumen?.capitalTotalARS && resumen?.capitalTotalUSD && resumen.capitalTotalARS > 0
+      ? resumen.capitalTotalARS / resumen.capitalTotalUSD
+      : 1;
+
+  const chartDataNorm = isUSD
+    ? chartData.map((d) => ({
+        ...d,
+        capitalUSD: d.capitalARS / tcRate,
+        valuacionUSD: d.valuacionARS / tcRate,
+      }))
+    : chartData;
+
+  const capKey = isUSD ? "capitalUSD" : "capitalARS";
+  const valKey = isUSD ? "valuacionUSD" : "valuacionARS";
+  const tickFmt = isUSD ? (v: number) => fmtUSD(v) : (v: number) => fmtARS(v, true);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
       {/* Historia */}
@@ -51,7 +72,7 @@ export function ChartsRow({ chartData, timeRange, setTimeRange, donutData, resum
           <div className="flex items-center justify-center h-48 text-gray-600 text-sm">Sin datos</div>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+            <AreaChart data={chartDataNorm} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="gradVal" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -63,10 +84,10 @@ export function ChartsRow({ chartData, timeRange, setTimeRange, donutData, resum
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fill: "#4b5563", fontSize: 11 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fill: "#4b5563", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtARS(v, true)} width={60} />
-              <Tooltip content={<ChartTooltip />} />
-              <Area type="monotone" dataKey="capitalARS" stroke="#7c3aed" strokeWidth={1.5} fill="url(#gradCap)" strokeDasharray="4 2" dot={false} />
-              <Area type="monotone" dataKey="valuacionARS" stroke="#10b981" strokeWidth={2} fill="url(#gradVal)" dot={false} />
+              <YAxis tick={{ fill: "#4b5563", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={tickFmt} width={60} />
+              <Tooltip content={<ChartTooltip moneda={moneda} />} />
+              <Area type="monotone" dataKey={capKey} stroke="#7c3aed" strokeWidth={1.5} fill="url(#gradCap)" strokeDasharray="4 2" dot={false} />
+              <Area type="monotone" dataKey={valKey} stroke="#10b981" strokeWidth={2} fill="url(#gradVal)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -109,20 +130,37 @@ export function ChartsRow({ chartData, timeRange, setTimeRange, donutData, resum
           </div>
         )}
         <div className="mt-4 pt-4 border-t border-white/8 space-y-1">
-          <div className="flex justify-between text-xs">
-            <span className="text-gray-500">Capital USD</span>
-            <span className="text-gray-300">{fmtUSD(resumen?.capitalTotalUSD)}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-gray-500">Valuacion USD</span>
-            <span className="text-gray-300">{fmtUSD(resumen?.valuacionTotalUSD)}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-gray-500">Ganancia USD</span>
-            <span className={`text-xs font-medium ${resumen?.gananciaTotalUSD != null && resumen.gananciaTotalUSD >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-              {fmtUSD(resumen?.gananciaTotalUSD)}
-            </span>
-          </div>
+          {isUSD ? (
+            <>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Capital USD</span>
+                <span className="text-gray-300">{fmtUSD(resumen?.capitalTotalUSD)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Valuacion USD</span>
+                <span className="text-gray-300">{fmtUSD(resumen?.valuacionTotalUSD)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Ganancia USD</span>
+                <span className={`text-xs font-medium ${colorG(resumen?.gananciaTotalUSD)}`}>{fmtUSD(resumen?.gananciaTotalUSD)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Capital ARS</span>
+                <span className="text-gray-300">{fmtARS(resumen?.capitalTotalARS)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Valuacion ARS</span>
+                <span className="text-gray-300">{fmtARS(resumen?.valuacionTotalARS)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Ganancia ARS</span>
+                <span className={`text-xs font-medium ${colorG(resumen?.gananciaTotalARS)}`}>{fmtARS(resumen?.gananciaTotalARS)}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

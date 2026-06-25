@@ -46,11 +46,14 @@ export function calcularPortfolio(
 
     if (tx.tipo === "Compra") {
       acc.cantidadActual += tx.cantidad;
-      acc.totalCompradoARS += tx.total;
-      acc.totalCompradoCantidad += tx.cantidad;
-      if (tx.totalUSD !== null && tx.precioUSD !== null) {
-        acc.totalCompradoUSD += tx.totalUSD;
-        acc.totalCompradoCantidadUSD += tx.cantidad;
+      // Excluir splits/bonificaciones (total = 0) del cálculo del PPC
+      if (tx.total > 0) {
+        acc.totalCompradoARS += tx.total;
+        acc.totalCompradoCantidad += tx.cantidad;
+        if (tx.totalUSD !== null && tx.precioUSD !== null) {
+          acc.totalCompradoUSD += tx.totalUSD;
+          acc.totalCompradoCantidadUSD += tx.cantidad;
+        }
       }
     } else {
       acc.cantidadActual -= tx.cantidad;
@@ -88,17 +91,20 @@ export function calcularPortfolio(
       acc.totalVendidoCantidadUSD > 0
         ? acc.totalVendidoUSD / acc.totalVendidoCantidadUSD
         : null;
-    const capitalInvertidoUSD =
-      promedioCompraUSD !== null
-        ? acc.cantidadActual * promedioCompraUSD
-        : null;
-
     const precioActualARS = ticker?.precioActual ?? null;
     // Compute USD from ARS using the correct dollar for each category
     const dollarRate =
       (ticker?.categoria === "Cripto")
         ? (variables.usdt ?? 1)
         : (variables.usdMep ?? 1);
+
+    const capitalInvertidoUSD =
+      promedioCompraUSD !== null
+        ? acc.cantidadActual * promedioCompraUSD
+        // Fallback para transacciones históricas sin totalUSD: convertir capital ARS con TC actual
+        : dollarRate > 0
+          ? capitalInvertidoARS / dollarRate
+          : null;
     const precioActualUSD =
       precioActualARS !== null ? precioActualARS / dollarRate : null;
 

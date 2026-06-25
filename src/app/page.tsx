@@ -28,6 +28,7 @@ export default function Home() {
   const [txSearch, setTxSearch] = useState("");
   const [showBrokerPanel, setShowBrokerPanel] = useState(false);
   const [sort, setSort] = useState<{ field: string; dir: "desc" | "asc" } | null>(null);
+  const [moneda, setMoneda] = useState<"ARS" | "USD">("ARS");
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -193,7 +194,7 @@ export default function Home() {
 
       <main className="flex-1 ml-56 min-h-screen">
         <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-          <PortfolioHeader resumen={r} />
+          <PortfolioHeader resumen={r} moneda={moneda} setMoneda={setMoneda} />
 
           {loading ? (
             <div className="flex items-center justify-center py-32">
@@ -207,6 +208,7 @@ export default function Home() {
                 setTimeRange={setTimeRange}
                 donutData={donutData}
                 resumen={r}
+                moneda={moneda}
               />
 
               {!showTx ? (
@@ -220,6 +222,7 @@ export default function Home() {
                   showTx={showTx}
                   setShowTx={setShowTx}
                   transactions={transactions}
+                  moneda={moneda}
                 />
               ) : (
                 <div className="border border-white/8 rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.02)" }}>
