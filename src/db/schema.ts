@@ -29,6 +29,13 @@ export const tickers = sqliteTable("tickers", {
   updatedAt: text("updated_at"),
 });
 
+export const variables = sqliteTable("variables", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  usdMep: real("usd_mep"),
+  usdt: real("usdt"),
+  fechaActualizacion: text("fecha_actualizacion"),
+});
+
 export type DbTransaction = typeof transactions.$inferSelect;
 export type NewDbTransaction = typeof transactions.$inferInsert;
 export type DbTicker = typeof tickers.$inferSelect;

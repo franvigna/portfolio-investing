@@ -6,8 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const [transactions, tickers] = await Promise.all([getTransactions(), getTickers()]);
-    const variables = getVariables();
+    const [transactions, tickers, variables] = await Promise.all([getTransactions(), getTickers(), getVariables()]);
     const portfolio = calcularPortfolio(transactions, tickers, variables);
     return NextResponse.json(portfolio);
   } catch (error) {

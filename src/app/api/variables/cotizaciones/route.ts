@@ -121,14 +121,14 @@ export async function POST() {
     const usdMep = mep?.venta ?? null;
     const usdt = cripto?.venta ?? null;
 
-    const current = getVariables();
+    const current = await getVariables();
     const updated = {
       ...current,
       ...(usdMep != null && { usdMep }),
       ...(usdt != null && { usdt }),
       fechaActualizacion: new Date().toISOString().split("T")[0],
     };
-    saveVariables(updated);
+    await saveVariables(updated);
 
     // Actualizar cripto
     const cryptoUpdates: string[] = [];

@@ -30,11 +30,11 @@ async function fetchHistoricalRates(casa: string): Promise<Map<string, number>> 
 
 export async function GET() {
   try {
-    const [transactions, tickers] = await Promise.all([
+    const [transactions, tickers, variables] = await Promise.all([
       getTransactions(),
       getTickers(),
+      getVariables(),
     ]);
-    const variables = getVariables();
 
     const priceMap = new Map(tickers.map((t) => [t.symbol, t.precioActual]));
     const categoryMap = new Map(tickers.map((t) => [t.symbol, t.categoria]));

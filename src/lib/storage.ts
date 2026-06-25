@@ -1,7 +1,5 @@
-import fs from "fs";
-import path from "path";
 import { getDb } from "@/db";
-import { transactions as txTable, tickers as tkTable } from "@/db/schema";
+import { transactions as txTable, tickers as tkTable, variables as varsTable } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import type { Transaction } from "@/types";
 
@@ -21,19 +19,6 @@ export interface Variables {
   fechaActualizacion: string | null;
 }
 
-// ---- Variables (still local JSON, simple config) ----
-
-const DATA_DIR = path.join(process.cwd(), "data");
-
-function readVarsJSON(): Variables {
-  const file = path.join(DATA_DIR, "variables.json");
-  return JSON.parse(fs.readFileSync(file, "utf-8")) as Variables;
-}
-
-function writeVarsJSON(vars: Variables): void {
-  const file = path.join(DATA_DIR, "variables.json");
-  fs.writeFileSync(file, JSON.stringify(vars, null, 2), "utf-8");
-}
 
 // ---- DB row -> domain type mapping ----
 
@@ -150,10 +135,32 @@ export async function updateTickerPrice(
 
 // ---- Variables ----
 
-export function getVariables(): Variables {
-  return readVarsJSON();
+export async function getVariables(): Promise<Variables> {
+  const db = getDb();
+  const rows = await db.select().from(varsTable).limit(1);
+  if (rows.length === 0) return { usdMep: null, usdt: null, fechaActualizacion: null };
+  const row = rows[0];
+  return {
+    usdMep: row.usdMep ?? null,
+    usdt: row.usdt ?? null,
+    fechaActualizacion: row.fechaActualizacion ?? null,
+  };
 }
 
-export function saveVariables(vars: Variables): void {
-  writeVarsJSON(vars);
+export async function saveVariables(vars: Variables): Promise<void> {
+  const db = getDb();
+  const rows = await db.select().from(varsTable).limit(1);
+  if (rows.length === 0) {
+    await db.insert(varsTable).values({
+      usdMep: vars.usdMep ?? undefined,
+      usdt: vars.usdt ?? undefined,
+      fechaActualizacion: vars.fechaActualizacion ?? undefined,
+    });
+  } else {
+    await db.update(varsTable).set({
+      usdMep: vars.usdMep ?? undefined,
+      usdt: vars.usdt ?? undefined,
+      fechaActualizacion: vars.fechaActualizacion ?? undefined,
+    }).where(eq(varsTable.id, rows[0].id));
+  }
 }

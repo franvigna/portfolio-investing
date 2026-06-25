@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    return NextResponse.json(getVariables());
+    return NextResponse.json(await getVariables());
   } catch (error) {
     console.error("GET /api/variables error:", error);
     return NextResponse.json({ error: "Error al leer variables" }, { status: 500 });
@@ -15,14 +15,14 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const current = getVariables();
+    const current = await getVariables();
     const updated = {
       ...current,
       ...(body.usdMep !== undefined && { usdMep: Number(body.usdMep) }),
       ...(body.usdt !== undefined && { usdt: Number(body.usdt) }),
       fechaActualizacion: new Date().toISOString().split("T")[0],
     };
-    saveVariables(updated);
+    await saveVariables(updated);
     return NextResponse.json(updated);
   } catch (error) {
     console.error("PUT /api/variables error:", error);
