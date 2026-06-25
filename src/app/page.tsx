@@ -234,6 +234,7 @@ export default function Home() {
                     txSearch={txSearch}
                     setTxSearch={setTxSearch}
                     onDeleted={loadData}
+                    onEdited={loadData}
                   />
                 </div>
               )}

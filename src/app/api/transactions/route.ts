@@ -1,4 +1,5 @@
 import { addTransaction, getTransactions } from "@/lib/storage";
+import { calcularCamposDerivados } from "@/lib/calcularTx";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -16,24 +17,31 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { fecha, tipo, ticker, cantidad, precioUnitario, total, precioUSD, totalUSD, broker, tcUsado, notas } = body;
+    const { fecha, tipo, ticker, cantidad, precioUnitario, broker } = body;
 
-    if (!fecha || !tipo || !ticker || !cantidad || !precioUnitario || !total) {
+    if (!fecha || !tipo || !ticker || !cantidad || !precioUnitario) {
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 });
     }
+
+    const tickerUpper = ticker.toUpperCase();
+    const { total, precioUSD, totalUSD, tcUsado } = await calcularCamposDerivados(
+      tickerUpper,
+      Number(precioUnitario),
+      Number(cantidad)
+    );
 
     const newTx = await addTransaction({
       fecha,
       tipo,
-      ticker: ticker.toUpperCase(),
+      ticker: tickerUpper,
       cantidad: Number(cantidad),
       precioUnitario: Number(precioUnitario),
-      total: Number(total),
-      precioUSD: precioUSD ? Number(precioUSD) : null,
-      totalUSD: totalUSD ? Number(totalUSD) : null,
+      total,
+      precioUSD,
+      totalUSD,
       broker: broker ?? null,
-      tcUsado: tcUsado ? Number(tcUsado) : null,
-      notas: notas ?? null,
+      tcUsado,
+      notas: null,
     });
 
     return NextResponse.json(newTx, { status: 201 });

@@ -8,9 +8,10 @@ interface TransaccionesTableProps {
   txSearch: string;
   setTxSearch: (v: string) => void;
   onDeleted: () => void;
+  onEdited: () => void;
 }
 
-export function TransaccionesTable({ filteredTx, txSearch, setTxSearch, onDeleted }: TransaccionesTableProps) {
+export function TransaccionesTable({ filteredTx, txSearch, setTxSearch, onDeleted, onEdited }: TransaccionesTableProps) {
   return (
     <div>
       <div className="px-5 py-3 border-b border-white/5">
@@ -38,7 +39,7 @@ export function TransaccionesTable({ filteredTx, txSearch, setTxSearch, onDelete
           </thead>
           <tbody>
             {filteredTx.map((tx) => (
-              <TxRow key={tx.id} tx={tx} onDeleted={onDeleted} />
+              <TxRow key={tx.id} tx={tx} onDeleted={onDeleted} onEdited={onEdited} />
             ))}
           </tbody>
         </table>
