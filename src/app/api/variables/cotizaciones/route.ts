@@ -19,109 +19,51 @@ const COINGECKO_IDS: Record<string, string> = {
   AVAX: "avalanche-2",
 };
 
-// Ratio de conversion: cuantos Cedears/acciones locales = 1 accion del exterior
-// precio_ars = precio_usd_exterior * mep / ratio
-const CEDEAR_RATIOS: Record<string, number> = {
-  AAPL: 20,
-  ADBE: 44,
-  AMD: 10,
-  AMZN: 144,
-  ASML: 146,
-  GOOGL: 58,
-  MELI: 120,
-  META: 24,
-  MSFT: 30,
-  NVDA: 24,
-  SPY: 60,
-  QQQ: 20,
-  ARKK: 10,
-  SMH: 50,
-  VIG: 10,
-  // Acciones argentinas con ADR en NYSE (ratio ADR)
-  GGAL: 10,
-  BMA: 10,
-  CEPU: 10,
-  LOMA: 5,
-  PAMP: 25,
-  YPFD: 1,
-  // Acciones locales sin ADR — precio directo en ARS, sin conversion
-  ALUA: 0,
-  SUPV: 0,
-  TECO2: 0,
-  TGNO4: 0,
-  TGSU2: 0,
-};
+// Tickers que cotizan en BYMA (Cedears, ETFs, acciones argentinas)
+const BYMA_TICKERS = new Set([
+  "AAPL", "ADBE", "AMD", "AMZN", "ASML", "GOOGL",
+  "MELI", "META", "MSFT", "NVDA", "SPY", "QQQ",
+  "ARKK", "SMH", "VIG",
+  "GGAL", "BMA", "CEPU", "LOMA", "PAMP", "YPFD",
+  "ALUA", "SUPV", "TECO2", "TGNO4", "TGSU2",
+]);
 
-// Simbolo de Yahoo Finance para cada ticker
-const YAHOO_SYMBOLS: Record<string, string> = {
-  AAPL: "AAPL",
-  ADBE: "ADBE",
-  AMD: "AMD",
-  AMZN: "AMZN",
-  ASML: "ASML",
-  GOOGL: "GOOGL",
-  MELI: "MELI",
-  META: "META",
-  MSFT: "MSFT",
-  NVDA: "NVDA",
-  SPY: "SPY",
-  QQQ: "QQQ",
-  ARKK: "ARKK",
-  SMH: "SMH",
-  VIG: "VIG",
-  // ADRs en NYSE
-  GGAL: "GGAL",
-  BMA: "BMA",
-  CEPU: "CEPU",
-  LOMA: "LOMA",
-  PAMP: "PAM",
-  YPFD: "YPF",
-};
-
-async function fetchYahooPrice(symbol: string): Promise<number | null> {
+async function fetchGoogleFinanceBCBA(ticker: string): Promise<number | null> {
   try {
-    const url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+    const res = await fetch(`https://www.google.com/finance/quote/${ticker}:BCBA`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "es-AR,es;q=0.9",
+      },
       next: { revalidate: 0 },
     });
     if (!res.ok) return null;
-    const data = await res.json();
-    return data?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
+    const html = await res.text();
+    // Patron: ["TICKER","BCBA"],"NombreEmpresa",0,"ARS",[PRECIO,
+    const match = html.match(new RegExp(`\\["${ticker}","BCBA"\\],"[^"]+",0,"ARS",\\[(\\d+(?:\\.\\d+)?),`));
+    if (!match) return null;
+    const price = parseFloat(match[1]);
+    // Sanity check: precio razonable para acciones/Cedears en ARS (max 5M)
+    return price < 5_000_000 ? price : null;
   } catch {
     return null;
   }
 }
 
-async function fetchYahooPrices(symbols: string[]): Promise<Record<string, number>> {
-  const results = await Promise.all(
-    symbols.map(async (symbol) => {
-      const price = await fetchYahooPrice(symbol);
-      return { symbol, price };
-    })
-  );
-  const prices: Record<string, number> = {};
-  for (const { symbol, price } of results) {
-    if (price != null) prices[symbol] = price;
-  }
-  return prices;
-}
-
 export async function POST() {
   try {
     const tickers = await getTickers();
-
-    // Fetch dolar + CoinGecko + Yahoo Finance en paralelo
     const cryptoTickers = tickers.filter((t) => t.categoria === "Cripto");
-    const yahooSymbolsList = Object.values(YAHOO_SYMBOLS);
+    const bymaTickerList = tickers
+      .filter((t) => BYMA_TICKERS.has(t.symbol.toUpperCase()))
+      .map((t) => t.symbol.toUpperCase());
 
-    const [dolarRes, cgRes, yahooPrices] = await Promise.all([
+    const [dolarRes, cgRes] = await Promise.all([
       fetch("https://dolarapi.com/v1/dolares", { next: { revalidate: 0 } }),
       fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${Object.values(COINGECKO_IDS).join(",")}&vs_currencies=usd`,
         { next: { revalidate: 0 } }
       ),
-      fetchYahooPrices(yahooSymbolsList),
     ]);
 
     if (!dolarRes.ok) throw new Error(`dolarapi.com respondio ${dolarRes.status}`);
@@ -166,25 +108,21 @@ export async function POST() {
       }
     }
 
-    // Actualizar Cedears, ETFs y acciones con ratio via Yahoo Finance
+    // Actualizar Cedears, ETFs y acciones argentinas via Google Finance BYMA
+    // Precio directo en ARS — sin necesidad de ratios ni conversion
     const equityUpdates: string[] = [];
-    if (usdMep != null) {
-      for (const ticker of tickers) {
-        const symbol = ticker.symbol.toUpperCase();
-        const yahooSymbol = YAHOO_SYMBOLS[symbol];
-        const ratio = CEDEAR_RATIOS[symbol];
+    const bymaResults = await Promise.all(
+      bymaTickerList.map(async (symbol) => ({
+        symbol,
+        priceARS: await fetchGoogleFinanceBCBA(symbol),
+      }))
+    );
 
-        if (!yahooSymbol || ratio == null || ratio === 0) continue;
-
-        const priceUSD = yahooPrices[yahooSymbol];
-        if (priceUSD == null) continue;
-
-        const priceARS = (priceUSD * usdMep) / ratio;
-        const priceUSDLocal = priceUSD / ratio;
-
-        await updateTickerPrice(symbol, priceARS, priceUSDLocal);
-        equityUpdates.push(symbol);
-      }
+    for (const { symbol, priceARS } of bymaResults) {
+      if (priceARS == null) continue;
+      const priceUSD = usdMep != null && usdMep > 0 ? priceARS / usdMep : null;
+      await updateTickerPrice(symbol, priceARS, priceUSD);
+      equityUpdates.push(symbol);
     }
 
     return NextResponse.json({ variables: updated, cryptoUpdated: cryptoUpdates, equityUpdated: equityUpdates });
