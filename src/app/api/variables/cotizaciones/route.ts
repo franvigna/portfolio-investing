@@ -78,19 +78,31 @@ const YAHOO_SYMBOLS: Record<string, string> = {
   YPFD: "YPF",
 };
 
+async function fetchYahooPrice(symbol: string): Promise<number | null> {
+  try {
+    const url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      next: { revalidate: 0 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchYahooPrices(symbols: string[]): Promise<Record<string, number>> {
-  const query = symbols.join(",");
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${query}&fields=regularMarketPrice`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0" },
-    next: { revalidate: 0 },
-  });
-  if (!res.ok) return {};
-  const data = await res.json();
-  const quotes = data?.quoteResponse?.result ?? [];
+  const results = await Promise.all(
+    symbols.map(async (symbol) => {
+      const price = await fetchYahooPrice(symbol);
+      return { symbol, price };
+    })
+  );
   const prices: Record<string, number> = {};
-  for (const q of quotes) {
-    prices[q.symbol] = q.regularMarketPrice;
+  for (const { symbol, price } of results) {
+    if (price != null) prices[symbol] = price;
   }
   return prices;
 }
