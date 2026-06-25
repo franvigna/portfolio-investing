@@ -46,12 +46,18 @@ export function calcularPortfolio(
 
     if (tx.tipo === "Compra") {
       acc.cantidadActual += tx.cantidad;
-      // Excluir splits/bonificaciones (total = 0) del cálculo del PPC
       if (tx.total > 0) {
+        // Compra normal: suma al numerador y denominador del PPC
         acc.totalCompradoARS += tx.total;
         acc.totalCompradoCantidad += tx.cantidad;
         if (tx.totalUSD !== null && tx.precioUSD !== null) {
           acc.totalCompradoUSD += tx.totalUSD;
+          acc.totalCompradoCantidadUSD += tx.cantidad;
+        }
+      } else {
+        // Split/bonificacion (total = 0): solo suma al denominador para bajar el PPC
+        acc.totalCompradoCantidad += tx.cantidad;
+        if (acc.totalCompradoCantidadUSD > 0) {
           acc.totalCompradoCantidadUSD += tx.cantidad;
         }
       }

@@ -7,7 +7,6 @@ import { filterHistory, catColor, type TimeRange, type Variables } from "@/lib/f
 import { Sidebar } from "@/components/Sidebar";
 import { BrokerPanel } from "@/components/BrokerPanel";
 import { ModalNuevaTx } from "@/components/ModalNuevaTx";
-import { ModalPrecios } from "@/components/ModalPrecios";
 import { PortfolioHeader } from "@/components/PortfolioHeader";
 import { ChartsRow } from "@/components/ChartsRow";
 import { ActivosTable } from "@/components/ActivosTable";
@@ -21,7 +20,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [fetchingRates, setFetchingRates] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [showPrecios, setShowPrecios] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("ALL");
   const [catFilter, setCatFilter] = useState("Todo");
   const [showTx, setShowTx] = useState(false);
@@ -174,8 +172,6 @@ export default function Home() {
   return (
     <div className="flex min-h-screen" style={{ background: "linear-gradient(135deg, #0a0a1a 0%, #0d0d20 50%, #0a0a1a 100%)" }}>
       {showModal && <ModalNuevaTx onClose={() => setShowModal(false)} onSaved={loadData} />}
-      {showPrecios && portfolio && <ModalPrecios posiciones={posiciones} onClose={() => setShowPrecios(false)} onSaved={loadData} />}
-
       <Sidebar
         variables={variables}
         fetchingRates={fetchingRates}
@@ -184,7 +180,6 @@ export default function Home() {
         showBrokerPanel={showBrokerPanel}
         setShowBrokerPanel={setShowBrokerPanel}
         onNewTx={() => setShowModal(true)}
-        onUpdatePrices={() => setShowPrecios(true)}
         onFetchRates={fetchRates}
       />
 

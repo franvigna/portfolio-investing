@@ -12,13 +12,13 @@ Documentacion detallada:
 
 **Stack:** Next.js 16 (App Router) + React 19 + TypeScript 5 + Tailwind CSS 4 + Drizzle ORM + Turso (SQLite) + NextAuth v5
 
-**Base de datos:** Turso con dos tablas — `transactions` (registro de compras/ventas) y `tickers` (activos con precios actuales). Las cotizaciones de dolar se guardan en `data/variables.json`.
+**Base de datos:** Turso con tres tablas — `transactions` (registro de compras/ventas), `tickers` (activos con precios actuales) y `variables` (cotizaciones USD MEP y USDT). Las cotizaciones se actualizan automáticamente al guardar cualquier transacción.
 
 **Autenticacion:** Google OAuth con whitelist de emails en `ALLOWED_EMAILS`. El middleware en `middleware.ts` protege todas las rutas. La logica vive en `src/auth.ts`.
 
-**Logica de negocio:** `src/lib/portfolio.ts` calcula PPC, valuacion y ganancias. `src/lib/storage.ts` centraliza todo acceso a datos. `src/lib/format.ts` tiene formateo de moneda y fechas.
+**Logica de negocio:** `src/lib/portfolio.ts` calcula PPC, valuacion y ganancias (ARS y USD). `src/lib/calcularTx.ts` calcula campos derivados al guardar transacciones (llama a dolarapi en tiempo real). `src/lib/storage.ts` centraliza todo acceso a datos. `src/lib/format.ts` tiene formateo de moneda y fechas.
 
-**Dashboard:** Un solo Client Component (`src/app/page.tsx`) maneja todo el estado. Los datos calculados (posiciones filtradas, graficos, analisis por broker) se derivan con `useMemo`.
+**Dashboard:** Un solo Client Component (`src/app/page.tsx`) maneja todo el estado, incluyendo el toggle global `moneda: "ARS" | "USD"` que pasa como prop a todos los componentes de visualizacion. Los datos calculados (posiciones filtradas, graficos, analisis por broker) se derivan con `useMemo`.
 
 **APIs externas:** dolarapi.com (USD MEP y USDT), CoinGecko (precios cripto), ArgentinaDatos (tasas historicas para reconstruccion de historial).
 

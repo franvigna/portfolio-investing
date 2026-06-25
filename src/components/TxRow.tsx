@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { fmtDate, fmtARS, fmtQty } from "@/lib/format";
 import type { Transaction } from "@/types";
 import { ModalNuevaTx } from "./ModalNuevaTx";
@@ -42,12 +43,13 @@ export function TxRow({ tx, onDeleted, onEdited }: { tx: Transaction; onDeleted:
           )}
         </td>
       </tr>
-      {editing && (
+      {editing && createPortal(
         <ModalNuevaTx
           transaccion={tx}
           onClose={() => setEditing(false)}
           onSaved={() => { setEditing(false); onEdited(); }}
-        />
+        />,
+        document.body
       )}
     </>
   );

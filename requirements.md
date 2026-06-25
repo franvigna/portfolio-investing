@@ -22,13 +22,16 @@ Aplicación web privada de seguimiento de cartera de inversiones en activos fina
 - Ordenamiento de columnas en tabla de activos (click doble para cambiar dirección, triple para limpiar)
 
 ### Gestión de transacciones
-- Crear transacción con: fecha, tipo (Compra/Venta), ticker, cantidad, precio ARS, total ARS, precio USD, total USD, tipo de cambio usado, broker y notas
-- El total ARS se calcula automáticamente al ingresar cantidad y precio
-- El total USD se calcula automáticamente al ingresar precio USD
+- Crear transacción con solo 6 campos: fecha (default hoy), broker, tipo (Compra/Venta), ticker, cantidad y precio unitario ARS
+- Total ARS, precio USD, total USD y tipo de cambio se calculan automáticamente en el backend al guardar
+- El tipo de cambio se obtiene en tiempo real desde dolarapi.com al momento de crear o editar la transacción
+- Al guardar una transacción, las cotizaciones en la tabla `variables` también se actualizan como efecto secundario
+- Editar transacción desde la vista de transacciones (mismo modal, modo edición, recalcula campos derivados)
 - Eliminar transacción con confirmación inline (Sí/No)
 - Búsqueda de transacciones por ticker o broker
 - Importar transacciones en bulk (array JSON via API)
 - Exportar todas las transacciones como archivo JSON con fecha en el nombre
+- Splits y bonificaciones (compras con total = 0) se excluyen del cálculo de PPC pero suman cantidad
 
 ### Cálculo de cartera (PPC y valuación)
 - Promedio ponderado de compra (PPC) calculado dinámicamente a partir de las transacciones
@@ -42,10 +45,12 @@ Aplicación web privada de seguimiento de cartera de inversiones en activos fina
 - Para activos sin precio informado, la valuación y ganancia quedan como null
 
 ### Multi-divisa
-- Todas las posiciones se muestran en ARS y USD en simultáneo
-- Para cripto, la tasa de conversión es `variables.usdt`
+- Toggle global ARS/USD en el header del dashboard — cambia toda la interfaz en tiempo real
+- En modo USD: header, tabla de activos, footer de totales, gráfico de historia y panel de asignación muestran valores en USD
+- Para cripto, la tasa de conversión es `variables.usdt` (dólar cripto con markup 3.15% de Nexo)
 - Para el resto, la tasa es `variables.usdMep`
-- Si una transacción no tiene `totalUSD`, se calcula a partir del total ARS y la tasa correspondiente
+- Si una posición no tiene `totalUSD` histórico, se estima con el TC actual como fallback (garantiza que `capitalTotalUSD` nunca sea null)
+- USDT se trata como posición cripto: precio unitario ARS = TC usado, precioUSD = 1
 
 ### Actualización de cotizaciones
 - Botón en sidebar para actualizar cotizaciones automaticamente
@@ -74,7 +79,8 @@ Aplicación web privada de seguimiento de cartera de inversiones en activos fina
 - Gráfico de área con dos líneas: valuación (verde) y capital invertido (violet)
 - Filtros de rango temporal: 30D, 3M, 6M, 1Y, ALL
 - Gráfico donut de asignación de cartera por categoría con porcentajes
-- Footer del gráfico donut muestra totales USD: capital, valuación y ganancia
+- Panel de asignación muestra totales en la moneda activa (ARS o USD según toggle)
+- Gráfico de historia en modo USD usa conversión aproximada (TC implícito actual) para escalar el eje Y
 
 ### Categorías de activos
 - Cedear: certificados de depósito argentinos que replican acciones extranjeras

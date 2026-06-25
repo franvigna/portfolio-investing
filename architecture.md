@@ -83,8 +83,11 @@ Instancia única compartida. Singleton de conexión en `src/db/index.ts` para ev
 | precioActualUSD | REAL | nullable |
 | updatedAt | TEXT | nullable — timestamp de última actualización |
 
-### Variables (JSON local)
-`data/variables.json` almacena cotizaciones vigentes: `usdMep`, `usdt`, `fechaActualizacion`. No está en la BD porque cambia frecuentemente y no necesita historial.
+### Tabla `variables`
+
+Cotizaciones vigentes en Turso: `usdMep`, `usdt`, `fechaActualizacion`. Fila única (id=1), actualizada por `saveVariables()`.
+
+Se actualiza automáticamente al guardar cualquier transacción (efecto secundario de `calcularCamposDerivados`).
 
 ---
 
@@ -112,8 +115,8 @@ Todas las operaciones de BD pasan por esta capa. Nunca se llama a Drizzle direct
 | `updateTransaction(id, data)` | UPDATE parcial, retorna objeto o null |
 | `getTickers()` | SELECT todos |
 | `updateTickerPrice(symbol, data)` | UPDATE precios por symbol |
-| `getVariables()` | Lee data/variables.json |
-| `saveVariables(data)` | Escribe data/variables.json |
+| `getVariables()` | Lee cotizaciones desde tabla `variables` en Turso |
+| `saveVariables(data)` | Upsert de cotizaciones en tabla `variables` |
 
 ---
 
@@ -126,17 +129,22 @@ Calcula el estado completo de la cartera a partir de los datos crudos.
 **Flujo:**
 1. Agrupa transacciones por ticker
 2. Para cada ticker: suma compras, resta ventas → cantidad actual y totales invertidos
-3. Filtra posiciones con `cantidad > 0.0001` (posición activa)
-4. Para cada posición activa:
+3. Compras con `total = 0` (splits/bonificaciones) suman cantidad pero no afectan el PPC
+4. Filtra posiciones con `cantidad > 0.0001` (posición activa)
+5. Para cada posición activa:
    - PPC = total_comprado / cantidad_comprada (promedio ponderado)
    - Capital invertido = cantidad_actual * PPC
    - Valuación = cantidad_actual * precioActual (si existe)
    - Ganancia = valuación - capital_invertido
    - Tenencia % = capital_posición / capital_total
-5. Calcula resumen total (ARS y USD)
-6. Agrupa por categoría con porcentajes
+6. Calcula resumen total (ARS y USD)
+7. Agrupa por categoría con porcentajes
 
-**Conversión USD:** Si `totalUSD` no está en la transacción, calcula `total / rate` donde `rate` es `usdt` para cripto y `usdMep` para el resto.
+**Conversión USD:** Usa `totalUSD` guardado en la transacción. Si no existe (datos históricos), fallback: `capitalInvertidoARS / dollarRate` con el TC actual. Garantiza que `capitalTotalUSD` nunca sea null cuando hay precios actualizados.
+
+### `calcularCamposDerivados(ticker, precioUnitario, cantidad)` — `src/lib/calcularTx.ts`
+
+Llamado por POST y PUT de transacciones. Llama a dolarapi.com en tiempo real, calcula `total`, `precioUSD`, `totalUSD` y `tcUsado` según la categoría del ticker. Actualiza la tabla `variables` como efecto secundario (sin bloquear la respuesta).
 
 ---
 
@@ -146,9 +154,9 @@ Todas las rutas son serverless functions. Las de lectura/escritura usan `dynamic
 
 ### Transacciones
 - `GET /api/transactions` — lista todas ordenadas por fecha
-- `POST /api/transactions` — crea una nueva (valida campos requeridos, convierte ticker a mayúsculas)
+- `POST /api/transactions` — crea una nueva con 6 campos (fecha, tipo, ticker, cantidad, precioUnitario, broker); total/precioUSD/totalUSD/tcUsado se calculan via `calcularCamposDerivados`
 - `DELETE /api/transactions/[id]` — elimina por ID
-- `PUT /api/transactions/[id]` — actualiza campos parcialmente
+- `PUT /api/transactions/[id]` — edita; recalcula campos derivados igual que POST
 
 ### Cartera
 - `GET /api/portfolio` — ejecuta `calcularPortfolio()` y retorna `PortfolioData`
@@ -195,7 +203,7 @@ page.tsx (client)
   ├── ActivosTable             — posiciones activas con filtros y ordenamiento
   │     └── FooterTotales     — fila de totales al pie
   ├── TransaccionesTable       — transacciones con búsqueda
-  │     └── TxRow             — fila con borrado inline
+  │     └── TxRow             — fila con edición y borrado inline
   ├── BrokerPanel              — panel lateral de análisis por broker
   ├── ModalNuevaTx             — formulario de nueva transacción
   └── ModalPrecios             — formulario de actualización de precios
@@ -206,6 +214,7 @@ page.tsx (client)
 - El estado global de la aplicación vive en `page.tsx` como estados de React
 - Los datos calculados (posiciones filtradas, datos de gráficos, análisis de brokers) se derivan con `useMemo`
 - Cada modal recibe callback `onSaved` que dispara re-fetch de los datos necesarios
+- `ModalNuevaTx` funciona en dos modos: creación (POST) y edición (PUT) según si recibe prop `transaccion`
 
 ---
 
@@ -229,6 +238,7 @@ timeRange: TimeRange        // Filtro de gráfico
 catFilter: string           // Filtro de categoría
 txSearch: string            // Búsqueda de transacciones
 sort: { field, dir } | null // Ordenamiento de tabla
+moneda: "ARS" | "USD"       // Toggle global de moneda
 
 // Derivados (useMemo)
 filteredPos: Posicion[]     // posiciones filtradas por categoría y ordenadas
@@ -262,10 +272,15 @@ brokerAnalysis: BrokerItem[]
 
 ## Flujos principales
 
-### Crear transacción
+### Crear / editar transacción
 ```
-User → ModalNuevaTx → POST /api/transactions
-→ addTransaction() → INSERT Turso
+User → ModalNuevaTx (6 campos) → POST o PUT /api/transactions[/id]
+→ calcularCamposDerivados()
+    → fetch dolarapi.com (tiempo real)
+    → determina TC según categoría del ticker
+    → calcula total, precioUSD, totalUSD, tcUsado
+    → saveVariables() en background (actualiza cotizaciones)
+→ addTransaction() / updateTransaction() → Turso
 → onSaved() → re-fetch portfolio + transactions + history
 → UI actualizada
 ```

@@ -20,7 +20,6 @@ interface SidebarProps {
   showBrokerPanel: boolean;
   setShowBrokerPanel: (v: boolean | ((prev: boolean) => boolean)) => void;
   onNewTx: () => void;
-  onUpdatePrices: () => void;
   onFetchRates: () => void;
 }
 
@@ -32,7 +31,6 @@ export function Sidebar({
   showBrokerPanel,
   setShowBrokerPanel,
   onNewTx,
-  onUpdatePrices,
   onFetchRates,
 }: SidebarProps) {
   const { data: session } = useSession();
@@ -64,7 +62,6 @@ export function Sidebar({
           {iconPlus}
           Nueva Transaccion
         </button>
-        <SideNavItem icon={iconTag} label="Actualizar Precios" onClick={onUpdatePrices} />
         <SideNavItem
           icon={iconRefresh}
           label={fetchingRates ? "Actualizando..." : "Cotizaciones"}
